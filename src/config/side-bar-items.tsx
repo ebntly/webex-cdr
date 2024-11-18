@@ -1,7 +1,10 @@
 import { HomeIcon, PersonStanding, Clock, Route, PhoneIncoming } from "lucide-react";
 import { ReactElement, ReactNode } from "react";
 import { CronJob } from "webex-cron-dark-api/dist/models";
-import { Person } from 'webex-proxy-api/dist/schema'
+import { Person } from 'webex-proxy-api/dist/schema';
+import { hosts } from "@/lib/hosts";
+
+const { wxOps, wxProxy, wxCronOps } = hosts;
 
 export type SidebarData = {
   name: string;
@@ -47,7 +50,7 @@ export const sideBarItems: SidebarItem[] = [
     loadData: async (filter) => {
       if (!filter) return Promise.resolve([]);
         
-      const response = await fetch(`http://localhost:5001/people?displayName=${filter}`);      
+      const response = await fetch(`${wxProxy}/people?displayName=${filter}`);      
       const data = await response.json() as Person[];
 
       return data.map((item) => ({
@@ -133,7 +136,7 @@ export const sideBarItems: SidebarItem[] = [
       badge: '',
     },
     loadData: async () => {
-      const response = await fetch('http://localhost:5003/cron-job/list').then(async (data) => {
+      const response = await fetch(`${wxCronOps}/cron-job/list`).then(async (data) => {
         const json = await data.json();
         const jobs = json as CronJob[];
        
