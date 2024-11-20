@@ -9,12 +9,11 @@ type Props = {
   corrId?: string;
 }
 export function PersonRecordings({user, corrId}: Props) {
-  const emails = user.userName;
   return (
     <Card>
       <CardHeader>
         <CardTitle>Recordings</CardTitle>
-        <CardDescription>Today's 100 most recent recordings</CardDescription>
+        <CardDescription>Today&apos;s 100 most recent recordings</CardDescription>
       </CardHeader>
       <CardContent>
         <div  className="w-full overflow-auto" style={{maxHeight: "30rem"}}>

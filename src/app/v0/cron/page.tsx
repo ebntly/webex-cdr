@@ -29,7 +29,7 @@ export default function Page() {
         label: 'Cron Jobs'
       }
     ]);
-  }, [])
+  }, [setBreadcrumbs])
 
   return (    
     <div className="flex flex-1 flex-col gap-4">

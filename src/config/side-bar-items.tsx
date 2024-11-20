@@ -1,10 +1,10 @@
 import { HomeIcon, PersonStanding, Clock, Route, PhoneIncoming } from "lucide-react";
-import { ReactElement, ReactNode } from "react";
+import { ReactNode } from "react";
 import { CronJob } from "webex-cron-dark-api/dist/models";
 import { Person } from 'webex-proxy-api/dist/schema';
 import { hosts } from "@/lib/hosts";
 
-const { wxOps, wxProxy, wxCronOps } = hosts;
+const { wxProxy, wxCronOps } = hosts;
 
 export type SidebarData = {
   name: string;
@@ -57,7 +57,7 @@ export const sideBarItems: SidebarItem[] = [
         name: item.displayName,
         description: item.emails[0],
         url: `/v0/people/${item.id}`,
-        badge: item.phoneNumbers.find((item: any) => item.type === 'work_extension')!.value
+        badge: item.phoneNumbers.find((item: {type: string, value: string, primary: boolean}) => item.type === 'work_extension')!.value
       }))
     }
   },
@@ -77,6 +77,7 @@ export const sideBarItems: SidebarItem[] = [
       const startOfDay = new Date(now.setHours(0, 0, 0, 0));
       const startOfYesterday = new Date(now.setDate(now.getDate() - 1));
       const startOfThisWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+      const startOfLastWeek = new Date(now.setDate(now.getDate() - 7));
 
       const items = [
         {
@@ -114,9 +115,17 @@ export const sideBarItems: SidebarItem[] = [
           description: 'Show CDR entries for this week',
           url: `/v0/cdr?where=${JSON.stringify({
             reportTime: { gte: startOfThisWeek.toISOString()}
-          })}&order={"reportTime": "DESC"}}`,
+          })}&order={"reportTime": "DESC"}`,
           badge: ''
         },
+        {
+          name: 'Last Week',
+          description: 'Show CDR entries for last week',
+          url: `/v0/cdr?where=${JSON.stringify({
+            reportTime: { between: [startOfLastWeek.toISOString(), startOfThisWeek.toISOString()]}
+          })}&order={"reportTime": "DESC"}`,
+          badge: ''
+        }
       ];
 
       return Promise.resolve(items.filter((item) => {
@@ -188,6 +197,7 @@ export const sideBarItems: SidebarItem[] = [
       const startOfDay = new Date(now.setHours(0, 0, 0, 0));
       const startOfYesterday = new Date(now.setDate(now.getDate() - 1));
       const startOfThisWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+      const startOfLastWeek = new Date(now.setDate(now.getDate() - 7));
 
       const items = [
         {
@@ -228,6 +238,14 @@ export const sideBarItems: SidebarItem[] = [
           })}&order={"reportTime": "DESC"}`,
           badge: ''
         },
+        {
+          name: 'Last Week',
+          description: 'Show CDR entries for last week',
+          url: `?where=${JSON.stringify({
+            reportTime: { between: [startOfLastWeek.toISOString(), startOfThisWeek.toISOString()]}
+          })}&order={"reportTime": "DESC"}`,
+          badge: ''
+        }
       ];
 
       return Promise.resolve(items.filter((item) => {

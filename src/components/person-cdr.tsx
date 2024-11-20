@@ -19,7 +19,7 @@ export function PersonCdr({user, onRowSelect, corrId}: Props) {
     <Card>
       <CardHeader>
         <CardTitle>CDR</CardTitle>
-        <CardDescription>Today's 100 most recent CDR Entries</CardDescription>
+        <CardDescription>Today&apos;s 100 most recent CDR Entries</CardDescription>
       </CardHeader>
       <CardContent>
         <a href={`/v0/people/${user.id}/cdr`}>View all</a>

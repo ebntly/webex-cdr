@@ -38,7 +38,7 @@ export default function Page({
         }
       ])
     });
-  }, [params]);
+  }, [params, setBreadcrumbs]);
 
   
   return (

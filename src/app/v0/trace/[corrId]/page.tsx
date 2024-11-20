@@ -54,15 +54,15 @@ export default function Page({
         }
       ])
     });
-  }, [params]);
+  }, [params, setBreadcrumbs]);
   return (
     <div className="flex flex-1 flex-col gap-4">
       <h1 className="text-2xl">{trace ? trace.timeline[0].description : "Loading trace..."}</h1>
       <h2 className="text-xl">Call trace</h2>
       <div className="grid grid-cols-2 gap-4">
       <div className="flex flex-col gap-4">
-        {trace?.timeline.map((item) => (
-          <Card className="grid grid-cols-2 gap-4 align-top">
+        {trace?.timeline.map((item, i) => (
+          <Card className="grid grid-cols-2 gap-4 align-top" key={`timeline-${i}`}>
             <CardHeader>
               <CardTitle>{item.title}</CardTitle>
               <CardDescription>{item.description}</CardDescription>
@@ -89,7 +89,7 @@ export default function Page({
           <div className="flex flex-col gap-4">
             <div>
               {trace?.recordings.map((rec) => (
-                <div className="flex flex-row items-center gap-4">                  
+                <div className="flex flex-row items-center gap-4" key={rec.id}>                  
                   <Label>{rec.topic}</Label> 
                   <Button disabled={recording && recording.id === rec.reportId} key={rec.id} size={"sm"} variant={"ghost"} onClick={() => loadRecording(rec)}><Play/> Load</Button>
                 </div>

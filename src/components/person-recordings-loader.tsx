@@ -13,6 +13,8 @@ interface Props {
   corrId?: string;
 }
 
+type refScroll = (opt: { behavior: 'smooth', block: 'start' }) => void;
+
 export function PersonRecordingsLoader({userId, date, corrId}: Props) {
   const ref = useRef(null);
   // userId from Webex is BAse 64 encoded.
@@ -35,11 +37,11 @@ export function PersonRecordingsLoader({userId, date, corrId}: Props) {
     }).catch((e) => {
       console.log(e)
     });
-  }, [userId, date]);
+  }, [userId, date, endDate, startDate, userRealId]);
 
   useEffect(() => {
     if (ref && ref.current) {
-      (ref.current as any).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      (ref.current as {scrollIntoView: refScroll}).scrollIntoView({ behavior: 'smooth', block: 'start' }); 
     }
   }, [corrId]);
 

@@ -2,12 +2,11 @@
 import { CdrEntry } from "webex-data/dist/models";
 import { Page as PageData } from "webex-ops/dist/lib"
 import { useSidebar } from "@/components/ui/sidebar";
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useSearchParams } from 'next/navigation';
 import { X } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { hosts } from "@/lib/hosts";
@@ -32,7 +31,6 @@ export default function Page({
   const [target, setTarget] = useState<string>("");
   const now = new Date();
   const lastHour = new Date(now.getTime() - 60 * 60 * 1000);
-  const toDay = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
   const filter = queryString.get('where') || `{"startTime":{"gt":"${lastHour.toISOString()}"}}`;
   const order = queryString.get('order') || '{"startTime":"DESC"}';
@@ -47,7 +45,6 @@ export default function Page({
       const userData = await response.json() as Person;
       const origFilter = JSON.parse(filter);
       const where = origFilter.and ? origFilter : {and: [origFilter]};
-      console.log(userData);
       const targetFilter = {or: userData.phoneNumbers.map((phone) => ({calledNumber: phone.value}))};
       where.and.push(targetFilter);
       const cdrData = await fetch(`${wxOps}/cdr/list/${limit}/${currentPage}?where=${encodeURIComponent(JSON.stringify(where))}&order=${order}`)
@@ -73,7 +70,7 @@ export default function Page({
         }
       ])
     });
-  }, [params, queryString]);
+  }, [params, queryString, currentPage, filter, limit, order, setBreadcrumbs]);
 
   const getFilterLink = () => {
     if (!user) return '';
@@ -83,72 +80,74 @@ export default function Page({
     const targetFilter = {callingNumber: {like: target}};
 
     where.and.push(targetFilter);
-    return `/v0/people/${user.id}/?where=${JSON.stringify(where)}&order=${order}&limit=${limit}&page=0`;
+    return `/v0/people/${user.id}/cdr/?where=${JSON.stringify(where)}&order=${order}&limit=${limit}&page=0`;
   };
   return (
-    <div className="flex flex-1 flex-col gap-4">
-      <h1 className="text-2xl">{user ? `${user.displayName} - CDR Entries` : "Loading user..."}</h1>
-      {!JSON.parse(filter).and && (
-        <div className="flex gap-4">
-          <Input defaultValue={target} onKeyUp={(e) => setTarget(e.currentTarget.value)} placeholder="Enter target number"/>
-          {target ? (
-            <a href={getFilterLink()}>
-              <Button>Search</Button>
-            </a>
-          ): (
-            <Button disabled>Search</Button>
-          )}      
-        </div>
-      )}
-      {page && (
-        <Pagination>
-          <PaginationContent>
-            {showPrev && (
-              <PaginationItem>
-                <PaginationPrevious href={`/v0/people/${user?.id}/cdr?limit=${limit}&page=${parseInt(currentPage) - 1}&where=${filter}&order=${order}`} />
-              </PaginationItem>
-            )}          
-            <PaginationItem>
-              <small>Showing entries {parseInt(currentPage) * parseInt(limit) + 1} - {Math.min((parseInt(currentPage) + 1) * parseInt(limit), page?.total || 0)} of {page?.total || 0}</small>
-            </PaginationItem>
-            {showNext && (
-              <PaginationItem>
-                <PaginationNext href={`/v0/people/${user?.id}/cdr?limit=${limit}&page=${parseInt(currentPage) + 1}&where=${filter}&order=${order}`} />
-              </PaginationItem>
-            )}
-          </PaginationContent>
-        </Pagination>
+    <Suspense fallback={<div>Loading...</div>}>
+      <div className="flex flex-1 flex-col gap-4">
+        <h1 className="text-2xl">{user ? `${user.displayName} - CDR Entries` : "Loading user..."}</h1>
+        {!JSON.parse(filter).and && (
+          <div className="flex gap-4">
+            <Input defaultValue={target} onKeyUp={(e) => setTarget(e.currentTarget.value)} placeholder="Enter target number"/>
+            {target ? (
+              <a href={getFilterLink()}>
+                <Button>Search</Button>
+              </a>
+            ): (
+              <Button disabled>Search</Button>
+            )}      
+          </div>
         )}
-      <div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead></TableHead>
-              <TableHead>Answered</TableHead>
-              <TableHead>Time</TableHead>
-              <TableHead>Calling Number</TableHead>
-              <TableHead>Calling ID</TableHead>
-              <TableHead>Called Number</TableHead>
-              <TableHead>Called ID</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {page?.data?.map((item) => (
-              <TableRow
-                key={item.id}
-              >
-                <TableCell><a href={`/v0/trace/${item.correlationId}`}>Trace</a></TableCell>
-                <TableCell>{item.answered === 'true' ? "" : <X className="text-destructive"/>}</TableCell>
-                <TableCell>{new Date(item.startTime!).toLocaleString()}</TableCell>
-                <TableCell>{item.callingNumber}</TableCell>
-                <TableCell>{item.callingLineId}</TableCell>
-                <TableCell>{item.calledNumber}</TableCell>
-                <TableCell>{item.calledLineId}</TableCell>
+        {page && (
+          <Pagination>
+            <PaginationContent>
+              {showPrev && (
+                <PaginationItem>
+                  <PaginationPrevious href={`/v0/people/${user?.id}/cdr?limit=${limit}&page=${parseInt(currentPage) - 1}&where=${filter}&order=${order}`} />
+                </PaginationItem>
+              )}          
+              <PaginationItem>
+                <small>Showing entries {parseInt(currentPage) * parseInt(limit) + 1} - {Math.min((parseInt(currentPage) + 1) * parseInt(limit), page?.total || 0)} of {page?.total || 0}</small>
+              </PaginationItem>
+              {showNext && (
+                <PaginationItem>
+                  <PaginationNext href={`/v0/people/${user?.id}/cdr?limit=${limit}&page=${parseInt(currentPage) + 1}&where=${filter}&order=${order}`} />
+                </PaginationItem>
+              )}
+            </PaginationContent>
+          </Pagination>
+          )}
+        <div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead></TableHead>
+                <TableHead>Answered</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>Calling Number</TableHead>
+                <TableHead>Calling ID</TableHead>
+                <TableHead>Called Number</TableHead>
+                <TableHead>Called ID</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {page?.data?.map((item) => (
+                <TableRow
+                  key={item.id}
+                >
+                  <TableCell><a href={`/v0/trace/${item.correlationId}`}>Trace</a></TableCell>
+                  <TableCell>{item.answered === 'true' ? "" : <X className="text-destructive"/>}</TableCell>
+                  <TableCell>{new Date(item.startTime!).toLocaleString()}</TableCell>
+                  <TableCell>{item.callingNumber}</TableCell>
+                  <TableCell>{item.callingLineId}</TableCell>
+                  <TableCell>{item.calledNumber}</TableCell>
+                  <TableCell>{item.calledLineId}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
-    </div>
+    </Suspense>
   )
 }

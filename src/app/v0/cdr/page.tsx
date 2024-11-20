@@ -2,9 +2,9 @@
 import { CdrEntry } from "webex-data/dist/models";
 import { Page as PageData } from "webex-ops/dist/lib"
 import { useSidebar } from "@/components/ui/sidebar";
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useSearchParams } from 'next/navigation';
 import { Route, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select";
@@ -48,7 +48,7 @@ export default function Page() {
     }).catch((e) => {
       console.log(e)
     });
-  }, [queryString]);
+  }, [queryString, currentPage, filter, limit, order, setBreadcrumbs]);
 
   const getFilterLink = () => {
     if (targetType === 'none') return '';
@@ -63,81 +63,82 @@ export default function Page() {
     return `/v0/cdr?where=${JSON.stringify(where)}&order=${order}&limit=${limit}&page=0`;
   };
   return (
-    <div className="flex flex-1 flex-col gap-4">
-      <h1 className="text-2xl">CDR Entries</h1>
-      {!JSON.parse(filter).and && (
-        <div className="flex gap-4">
-          <Select value={targetType} onValueChange={(value) => setTargetType(value as any)}>
-            
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select target type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='neither'>Select target type</SelectItem>
-              <SelectItem value="calling">Calling</SelectItem>
-              <SelectItem value="called">Called</SelectItem>
-              <SelectItem value="either">Calling/called</SelectItem>
-            </SelectContent>
-          </Select>
-          <Input defaultValue={target} onKeyUp={(e) => setTarget(e.currentTarget.value)} placeholder="Enter target number" disabled={targetType === 'none'}/>
-          {targetType !== 'none' && target ? (
-            <a href={getFilterLink()}>
-              <Button>Search</Button>
-            </a>
-          ): (
-            <Button disabled>Search</Button>
-          )}      
-        </div>
-      )}
-      {page && (
-        <Pagination>
-          <PaginationContent>
-            {showPrev && (
-              <PaginationItem>
-                <PaginationPrevious href={`/v0/cdr?limit=${limit}&page=${parseInt(currentPage) - 1}&where=${filter}&order=${order}`} />
-              </PaginationItem>
-            )}          
-            <PaginationItem>
-              <small>Showing entries {parseInt(currentPage) * parseInt(limit) + 1} - {Math.min((parseInt(currentPage) + 1) * parseInt(limit), page?.total || 0)} of {page?.total || 0}</small>
-            </PaginationItem>
-            {showNext && (
-              <PaginationItem>
-                <PaginationNext href={`/v0/cdr?limit=${limit}&page=${parseInt(currentPage) + 1}&where=${filter}&order=${order}`} />
-              </PaginationItem>
-            )}
-          </PaginationContent>
-        </Pagination>
+    <Suspense fallback={<div>Loading...</div>}>
+      <div className="flex flex-1 flex-col gap-4">
+        <h1 className="text-2xl">CDR Entries</h1>
+        {!JSON.parse(filter).and && (
+          <div className="flex gap-4">
+            <Select value={targetType} onValueChange={(value) => setTargetType(value as typeof targetType)}>              
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select target type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='neither'>Select target type</SelectItem>
+                <SelectItem value="calling">Calling</SelectItem>
+                <SelectItem value="called">Called</SelectItem>
+                <SelectItem value="either">Calling/called</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input defaultValue={target} onKeyUp={(e) => setTarget(e.currentTarget.value)} placeholder="Enter target number" disabled={targetType === 'none'}/>
+            {targetType !== 'none' && target ? (
+              <a href={getFilterLink()}>
+                <Button>Search</Button>
+              </a>
+            ): (
+              <Button disabled>Search</Button>
+            )}      
+          </div>
         )}
-      <div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead></TableHead>
-              <TableHead>Answered</TableHead>
-              <TableHead>Time</TableHead>
-              <TableHead>Calling Number</TableHead>
-              <TableHead>Calling ID</TableHead>
-              <TableHead>Called Number</TableHead>
-              <TableHead>Called ID</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {page?.data.map((item) => (
-              <TableRow
-                key={item.id}
-              >
-                <TableCell><a href={`/v0/trace/${item.correlationId}`} title="Trace"><Button size="sm" variant="ghost"><Route /></Button></a></TableCell>
-                <TableCell>{item.answered === 'true' ? "" : <X className="text-destructive"/>}</TableCell>
-                <TableCell>{new Date(item.startTime!).toLocaleString()}</TableCell>
-                <TableCell>{item.callingNumber}</TableCell>
-                <TableCell>{item.callingLineId}</TableCell>
-                <TableCell>{item.calledNumber}</TableCell>
-                <TableCell>{item.calledLineId}</TableCell>
+        {page && (
+          <Pagination>
+            <PaginationContent>
+              {showPrev && (
+                <PaginationItem>
+                  <PaginationPrevious href={`/v0/cdr?limit=${limit}&page=${parseInt(currentPage) - 1}&where=${filter}&order=${order}`} />
+                </PaginationItem>
+              )}          
+              <PaginationItem>
+                <small>Showing entries {parseInt(currentPage) * parseInt(limit) + 1} - {Math.min((parseInt(currentPage) + 1) * parseInt(limit), page?.total || 0)} of {page?.total || 0}</small>
+              </PaginationItem>
+              {showNext && (
+                <PaginationItem>
+                  <PaginationNext href={`/v0/cdr?limit=${limit}&page=${parseInt(currentPage) + 1}&where=${filter}&order=${order}`} />
+                </PaginationItem>
+              )}
+            </PaginationContent>
+          </Pagination>
+          )}
+        <div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead></TableHead>
+                <TableHead>Answered</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>Calling Number</TableHead>
+                <TableHead>Calling ID</TableHead>
+                <TableHead>Called Number</TableHead>
+                <TableHead>Called ID</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {page?.data.map((item) => (
+                <TableRow
+                  key={item.id}
+                >
+                  <TableCell><a href={`/v0/trace/${item.correlationId}`} title="Trace"><Button size="sm" variant="ghost"><Route /></Button></a></TableCell>
+                  <TableCell>{item.answered === 'true' ? "" : <X className="text-destructive"/>}</TableCell>
+                  <TableCell>{new Date(item.startTime!).toLocaleString()}</TableCell>
+                  <TableCell>{item.callingNumber}</TableCell>
+                  <TableCell>{item.callingLineId}</TableCell>
+                  <TableCell>{item.calledNumber}</TableCell>
+                  <TableCell>{item.calledLineId}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
-    </div>
+    </Suspense>
   )
 }

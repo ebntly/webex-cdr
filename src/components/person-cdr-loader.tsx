@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { Check, Cross, CrossIcon, XIcon } from "lucide-react";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "./ui/table";
 import { PersonCdrRow } from "./person-cdr-row";
 import { hosts } from "@/lib/hosts";
+import { CdrEntry } from "webex-data/dist/models";
 
 const { wxOps } = hosts;
 
@@ -25,11 +25,11 @@ export function PersonCdrLoader({direction, number, date, onRowSelect, corrId}: 
   useEffect(() => {
     fetch(`${wxOps}/cdr/${direction}/${number}/100/0?where={"reportTime": {"between": ["${startDate}", "${endDate}"]}}`).then(async (data) => {
       const json = await data.json();
-      const items = json.data as any[];
+      const items = json.data as CdrEntry[];
 
       const correlationIds = items.reduce((acc: string[], curr) => {
-        if (acc.includes(curr.correlationId)) return acc;
-        acc.push(curr.correlationId);
+        if (acc.includes(curr.correlationId!)) return acc;
+        acc.push(curr.correlationId!);
 
         return acc;
       }, [] as string[]);
@@ -39,7 +39,7 @@ export function PersonCdrLoader({direction, number, date, onRowSelect, corrId}: 
     }).catch((e) => {
       console.log(e)
     });
-  }, [number, direction, date]);
+  }, [number, direction, date, endDate, startDate]);
 
   return (
     <div>
@@ -53,8 +53,8 @@ export function PersonCdrLoader({direction, number, date, onRowSelect, corrId}: 
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map((item, i) => (
-            <PersonCdrRow correlationId={item} onRowSelect={onRowSelect} isActive={corrId === item} />
+          {items.map((item) => (
+            <PersonCdrRow key={item} correlationId={item} onRowSelect={onRowSelect} isActive={corrId === item} />
           ))}
         </TableBody>
       </Table>

@@ -4,7 +4,6 @@ import * as React from "react"
 import { Command } from "lucide-react"
 import { SidebarData, SidebarItem, sideBarItems } from '@/config/side-bar-items'
 
-import { NavUser } from "./nav-user"
 import {
   Sidebar,
   SidebarContent,
@@ -17,16 +16,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./ui/sidebar"
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 // This is sample data
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  }
-}
+
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
@@ -37,10 +30,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   React.useEffect(() => {
     const currentlyActiveItem = sideBarItems.filter((item) => {
       const regex = new RegExp(`^${item.url}`, 'i');
-      console.log(regex, pathname);
-      return new RegExp(`^${item.url}`, 'i').test(pathname)
+      return regex.test(pathname)
     }).reduce((acc, curr) => {
-      console.log(curr)
       if (acc.url === pathname) return acc;
       if (acc.url.length > curr.url.length) return acc;
       return curr;
@@ -106,7 +97,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          <NavUser user={data.user} />
+          {/* <NavUser user={data.user} /> */}
         </SidebarFooter>
       </Sidebar>
 

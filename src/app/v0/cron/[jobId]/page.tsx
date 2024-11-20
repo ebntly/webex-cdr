@@ -42,7 +42,7 @@ export default function Page({
         }
       ])
     });
-  }, [params])
+  }, [params, setBreadcrumbs])
 
   
   return (
@@ -65,7 +65,7 @@ export default function Page({
                 >
                   <TableCell>{new Date(item.timestamp || "").toLocaleString()}</TableCell>
                   <TableCell>{item.message}</TableCell>
-                  <TableCell><details><summary>Show data</summary><pre>{(item.data as any)?.error ? JSON.stringify({error: JSON.parse((item.data as any).error)}, undefined, 2): JSON.stringify(item.data, undefined, 2 )}</pre></details></TableCell>
+                  <TableCell><details><summary>Show data</summary><pre>{(item.data as {error?: string})?.error ? JSON.stringify({error: JSON.parse((item.data as {error: string}).error)}, undefined, 2): JSON.stringify(item.data, undefined, 2 )}</pre></details></TableCell>
                 </TableRow>
               ))}
             </TableBody>
